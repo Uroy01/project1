@@ -5,7 +5,6 @@
 // output printing. It calls the active cache system for each of the memory
 // accesses received via stdin.
 //
-
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,7 +17,7 @@ int main(int argc, char **argv)
 {
     // Parse the arguments.
     if (argc != 5) {
-        fprintf(stderr, "Incorrect number of arguments.\n");
+        fprintf(stderr, "Incorrect number of arguments.");
         return 1;
     }
     char *replacement_policy_str = argv[1];
@@ -27,9 +26,9 @@ int main(int argc, char **argv)
     size_t cache_lines = strtol(argv[3], &endptr, 10);
     size_t associativity = strtol(argv[4], &endptr, 10);
 
-    // TODO: calculate the line size and number of sets.
-    int line_size = 0;
-    int sets = 0;
+    // calculate the line size and number of sets.
+    int line_size = cache_size/cache_lines;
+    int sets = cache_lines/associativity;
 
     // Print out some parameter info
     printf("Parameter Info\n");
@@ -67,9 +66,7 @@ int main(int argc, char **argv)
     uint32_t address = 0;
     while (scanf("%c %x\n", &rw, &address) >= 0) {
         printf("%s at 0x%x\n", (rw == 'R' ? "read" : "write"), address);
-        if (cache_system_mem_access(cache_system, address, rw) != 0) {
-            return 1;
-        }
+        cache_system_mem_access(cache_system, address, rw);
     }
 
     // Print the statistics
@@ -88,3 +85,4 @@ int main(int argc, char **argv)
 
     return 0;
 }
+
