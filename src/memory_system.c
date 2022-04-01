@@ -3,7 +3,7 @@
 // memory_system.h.
 //
 
-#include "memory_system.h"
+ #include "memory_system.h"
 
 struct cache_system *cache_system_new(uint32_t line_size, uint32_t sets, uint32_t associativity)
 {
@@ -14,10 +14,10 @@ struct cache_system *cache_system_new(uint32_t line_size, uint32_t sets, uint32_
     struct cache_system_stats stats = {0, 0, 0, 0};
     cs->stats = stats;
 
-    // TODO: calculate the index bits, offset bits and tag bits.
-    cs->index_bits = 0;
-    cs->offset_bits = 0;
-    cs->tag_bits = 0;
+    // calculate the index bits, offset bits and tag bits.
+    cs->index_bits = log(sets)/log(2);
+    cs->offset_bits = log(line_size)/log(2);
+    cs->tag_bits = 32-(cs->index_bits+cs->offset_bits); 
 
     cs->offset_mask = 0xffffffff >> (32 - cs->offset_bits);
     cs->set_index_mask = 0xffffffff >> cs->tag_bits;
@@ -47,16 +47,20 @@ void cache_system_cleanup(struct cache_system *cache_system)
     free(cache_system->replacement_policy);
 }
 
-int cache_system_mem_access(struct cache_system *cache_system, uint32_t address, char rw)
+void cache_system_mem_access(struct cache_system *cache_system, uint32_t address, char rw)
 {
+	//printf("test3\n");
     cache_system->stats.accesses++;
 
     uint32_t offset = (address & cache_system->offset_mask);
     uint32_t set_idx = (address & cache_system->set_index_mask) >> cache_system->offset_bits;
     uint32_t tag = address >> (cache_system->offset_bits + cache_system->index_bits);
+   // printf("address %x\n", address);
+    //printf("tag %x set_idx: %x\n", tag, set_idx);
 
     struct cache_line *cl = cache_system_find_cache_line(cache_system, set_idx, tag);
     if (cl == NULL || cl->status == INVALID) { // cache miss
+	    //printf("test4\n");
         printf("  0x%x miss\n", address);
         cache_system->stats.misses++;
 
@@ -70,25 +74,21 @@ int cache_system_mem_access(struct cache_system *cache_system, uint32_t address,
                 break;
             }
         }
-
+	//printf("test4.1\n");
         if (insert_index < 0) {
             // An eviction is necessary. Call the replacement policy's eviction
             // index function.
+	    //printf("test4.2\n");
             int evicted_index = (*cache_system->replacement_policy->eviction_index)(
                 cache_system->replacement_policy, cache_system, set_idx);
-
-            // Check to ensure that the eviction index is within the set.
-            if (evicted_index < 0 || cache_system->associativity <= evicted_index) {
-                fprintf(stderr, "Eviction index %d is outside of the set!", evicted_index);
-                return 1;
-            }
-
+		
+	    //printf("test4.3\n");
             // Check if the eviction requires writeback.
             struct cache_line evicted = cache_system->cache_lines[set_start + evicted_index];
             if (evicted.status == MODIFIED) {
                 cache_system->stats.dirty_evictions++;
             }
-
+	    //printf("test4.4\n");
             printf("  evict %s cache line from set %d index %d\n",
                    (evicted.status == MODIFIED ? "dirty" : "clean"), set_idx, evicted_index);
 
@@ -102,24 +102,31 @@ int cache_system_mem_access(struct cache_system *cache_system, uint32_t address,
         cl = &cache_system->cache_lines[set_start + insert_index];
         cl->tag = tag;
         cl->status = (rw == 'W') ? MODIFIED : EXCLUSIVE;
+	//printf("test4.5\n");
     } else { // cache hit
+	    printf("test5\n");
         printf("  0x%x hit: set %d, tag 0x%x, offset %d\n", address, set_idx, tag, offset);
         cache_system->stats.hits++;
         if (rw == 'W') cl->status = MODIFIED;
     }
-
+	//printf("test6\n");
     // Let the replacement policy know that the cache line was accessed.
     (*cache_system->replacement_policy->cache_access)(cache_system->replacement_policy,
                                                       cache_system, set_idx, tag);
-
-    // Everything was successful.
-    return 0;
+    //printf("test7\n");
 }
 
 struct cache_line *cache_system_find_cache_line(struct cache_system *cache_system, uint32_t set_idx,
                                                 uint32_t tag)
 {
-    // TODO Return a pointer to the cache line within the given set that has
+    // Return a pointer to the cache line within the given set that has
     // the given tag. If no such element exists, then return NULL.
+    uint32_t associativity = cache_system->associativity;
+    for(int i = 0; i < associativity; i++){
+	    struct cache_line *found_line = &cache_system->cache_lines[((int) associativity*set_idx) + i];
+	    if(found_line->tag == tag)
+		    return found_line;
+    }
+    
     return NULL;
 }
