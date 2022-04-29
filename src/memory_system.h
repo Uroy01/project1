@@ -55,7 +55,7 @@ struct cache_system *cache_system_new(uint32_t line_size, uint32_t sets, uint32_
 void cache_system_cleanup(struct cache_system *cache_system);
 
 // Perform updates to access memory
-int cache_system_mem_access(struct cache_system *cache_system, uint32_t address, char rw);
+void cache_system_mem_access(struct cache_system *cache_system, uint32_t address, char rw);
 
 // Returns a pointer to the cache line within the given set that has the given
 // tag. If no such element exists, then return NULL.
