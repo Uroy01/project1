@@ -19,8 +19,8 @@
 // ============================================================================
 // feel free to create additional structs/enums as necessary
 struct lru_data{
-	int count;
-	int *use_time;
+    int count;
+    int *use_time;
 };
 
 void lru_cache_access(struct replacement_policy *replacement_policy,
@@ -28,8 +28,8 @@ void lru_cache_access(struct replacement_policy *replacement_policy,
 {
     // update the LRU replacement policy state given a new memory access
     for(int i = 0; i < cache_system->associativity; i++){
-	    if(cache_system->cache_lines[set_idx*cache_system->associativity+i].tag == tag)
-		    ((struct lru_data*) replacement_policy->data)->use_time[set_idx*cache_system->associativity+i] = ((struct lru_data*) replacement_policy->data)->count;
+        if(cache_system->cache_lines[set_idx*cache_system->associativity+i].tag == tag)
+            ((struct lru_data*) replacement_policy->data)->use_time[set_idx*cache_system->associativity+i] = ((struct lru_data*) replacement_policy->data)->count;
     }
     ((struct lru_data*) replacement_policy->data)->count++;
 }
@@ -41,10 +41,10 @@ uint32_t lru_eviction_index(struct replacement_policy *replacement_policy,
     int oldest_time = ((struct lru_data*) replacement_policy->data)->use_time[set_idx*cache_system->associativity];
     int oldest_index = 0;
     for(int i = 1; i < cache_system->associativity; i++){
-	    if(((struct lru_data*) replacement_policy->data)->use_time[set_idx*cache_system->associativity + i] < oldest_time){
-		    oldest_index = i;
-		    oldest_time = ((struct lru_data*) replacement_policy->data)->use_time[set_idx*cache_system->associativity + i];
-	    } 
+        if(((struct lru_data*) replacement_policy->data)->use_time[set_idx*cache_system->associativity + i] < oldest_time){
+            oldest_index = i;
+            oldest_time = ((struct lru_data*) replacement_policy->data)->use_time[set_idx*cache_system->associativity + i];
+        }
     }
 
     return (uint32_t) oldest_index;
@@ -124,8 +124,8 @@ void lru_prefer_clean_cache_access(struct replacement_policy *replacement_policy
     // memory access
     // NOTE: you may be able to share code with the LRU policy
     for(int i = 0; i < cache_system->associativity; i++){
-	    if(cache_system->cache_lines[set_idx*cache_system->associativity+i].tag == tag)
-		    ((struct lru_data*) replacement_policy->data)->use_time[set_idx*cache_system->associativity+i] = ((struct lru_data*) replacement_policy->data)->count;
+        if(cache_system->cache_lines[set_idx*cache_system->associativity+i].tag == tag)
+            ((struct lru_data*) replacement_policy->data)->use_time[set_idx*cache_system->associativity+i] = ((struct lru_data*) replacement_policy->data)->count;
     }
     ((struct lru_data*) replacement_policy->data)->count++;
 
@@ -138,19 +138,19 @@ uint32_t lru_prefer_clean_eviction_index(struct replacement_policy *replacement_
     int oldest_time = INT_MAX;
     int oldest_index = -1;
     for(int i = 0; i < cache_system->associativity; i++){
-	    if(((struct lru_data*) replacement_policy->data)->use_time[set_idx*cache_system->associativity + i] < oldest_time &&
-			    cache_system->cache_lines[set_idx*cache_system->associativity+i].status != MODIFIED){
-		    oldest_index = i;
-		    oldest_time = ((struct lru_data*) replacement_policy->data)->use_time[set_idx*cache_system->associativity + i];
-	    } 
+        if(((struct lru_data*) replacement_policy->data)->use_time[set_idx*cache_system->associativity + i] < oldest_time &&
+                cache_system->cache_lines[set_idx*cache_system->associativity+i].status != MODIFIED){
+            oldest_index = i;
+            oldest_time = ((struct lru_data*) replacement_policy->data)->use_time[set_idx*cache_system->associativity + i];
+        }
     }
     if(oldest_index == -1){
-	    for(int i = 0; i < cache_system->associativity; i++){
-	    	if(((struct lru_data*) replacement_policy->data)->use_time[set_idx*cache_system->associativity + i] < oldest_time){
-		    oldest_index = i;
-		    oldest_time = ((struct lru_data*) replacement_policy->data)->use_time[set_idx*cache_system->associativity + i];
-	    	}	 
-    	}
+        for(int i = 0; i < cache_system->associativity; i++){
+            if(((struct lru_data*) replacement_policy->data)->use_time[set_idx*cache_system->associativity + i] < oldest_time){
+            oldest_index = i;
+            oldest_time = ((struct lru_data*) replacement_policy->data)->use_time[set_idx*cache_system->associativity + i];
+            }
+        }
     }
 
     return (uint32_t) oldest_index;
